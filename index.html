@@ -3,165 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>คำนวณค่าอาหารกลางวัน</title>
+    <title>CoEAtClub</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
-    <style>
-        .calculator-input {
-            font-family: monospace;
-            letter-spacing: 1px;
-        }
-        
-        .person-card {
-            transition: all 0.3s ease;
-        }
-        
-        .person-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-primary {
-            transition: all 0.2s ease;
-        }
-
-        .btn-primary:active {
-            transform: scale(0.98);
-        }
-
-        .results-card {
-            animation: slideIn 0.5s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .delete-btn {
-            transition: all 0.2s ease;
-        }
-
-        .delete-btn:hover {
-            background-color: #EF4444;
-            transform: rotate(5deg);
-        }
-    </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-4 md:p-8">
-    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">
-            💰 คำนวณค่าอาหารกลางวัน
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">
+            Cal 2 Survive
         </h1>
 
-        <div class="mb-6 space-y-4" id="peopleInputs">
-            <!-- จะเพิ่มช่องกรอกข้อมูลที่นี่ด้วย JavaScript -->
+        <!-- ส่วนรายการค่าใช้จ่าย -->
+        <div class="mb-6 space-y-4 p-4 bg-gray-50 rounded-xl">
+            <h2 class="text-xl font-semibold mb-4">ค่าเครื่องดื่ม:</h2>
+            <div id="expenseList" class="space-y-3">
+                <!-- JavaScript จะเพิ่มช่องกรอกที่นี่ -->
+            </div>
+            <button onclick="addExpense()" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                + add
+            </button>
         </div>
 
-        <button onclick="addPerson()" class="btn-primary mb-8 w-full bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 flex items-center justify-center space-x-2">
-            <span class="text-xl">+</span>
-            <span>เพิ่มคน</span>
-        </button>
-
-        <div class="mb-8">
-            <label class="block mb-2 font-medium text-gray-700">ค่าใช้จ่ายทั้งหมด:</label>
-            <input type="text" 
-                   id="totalExpense" 
-                   inputmode="numeric"
-                   class="calculator-input w-full p-4 border rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                   placeholder="ใส่ค่าใช้จ่าย (เช่น 890+890)"
-                   onkeyup="handleCalculator(this)">
-            <p id="calculationResult" class="mt-2 text-gray-500 text-sm"></p>
+        <!-- ส่วนเงินสมทบ -->
+        <div class="mb-6 p-4 bg-gray-50 rounded-xl">
+            <h2 class="text-xl font-semibold mb-4">ผู้ใหญ่บ้านใจดี:</h2>
+            <div class="flex gap-4">
+                <input type="text" 
+                       id="donation"
+                       class="w-full p-2 border rounded-lg"
+                       placeholder="ใส่จำนวนเงิน"
+                       onkeyup="handleCalculator(this)">
+                <p id="donationResult" class="min-w-[150px] flex items-center text-gray-600"></p>
+            </div>
         </div>
 
-        <button onclick="calculate()" class="btn-primary w-full bg-green-500 text-white px-6 py-4 rounded-lg hover:bg-green-600 mb-8 font-medium text-lg">
-            คำนวณ
+        <!-- ส่วนรายชื่อ -->
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-4">People:</h2>
+            <div id="peopleList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- JavaScript จะเพิ่มรายชื่อที่นี่ -->
+            </div>
+        </div>
+
+        <button onclick="calculate()" class="w-full bg-green-500 text-white px-6 py-3 rounded-xl hover:bg-green-600 mb-6 font-medium text-lg">
+            calculate
         </button>
 
         <div id="results" class="space-y-4"></div>
     </div>
 
     <script>
-        let people = [];
+        // รายชื่อเริ่มต้น
+        const defaultNames = [
+            {name: 'แทน', amount: 300},
+            {name: 'มิว', amount: 150},
+            {name: 'โซเฟีย', amount: 150},
+            {name: 'บุ๊ค', amount: 150},
+            {name: 'ไข่มุก', amount: 0},
+            {name: 'น้ำ', amount: 150},
+            {name: 'ไผ่', amount: 0},
+            {name: 'ภูมิ', amount: 150},
+            {name: 'กวิน', amount: 0},
+            {name: 'วิคเตอร์', amount: 0},
+            {name: 'ป๋อ', amount: 150},
+            {name: 'เตอร์', amount: 150},
+            {name: 'บุ๊ก', amount: 150},
+            {name: 'แคลช', amount: 150},
+            {name: 'อันดา', amount: 150},
+            {name: 'เฟิร์ส', amount: 150},
+            {name: 'ปั๋ง', amount: 150},
+            {name: 'เฟรม', amount: 150},
+            {name: 'เจโน่', amount: 150}
+        ];
 
-        function addPerson() {
-            const personDiv = document.createElement('div');
-            personDiv.className = 'person-card bg-gray-50 p-4 rounded-lg';
-            personDiv.innerHTML = `
-                <div class="flex gap-4">
-                    <input type="text" class="person-name w-1/2 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                           placeholder="ชื่อ">
-                    <input type="number" class="person-amount w-1/2 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                           placeholder="จำนวนเงิน"
-                           inputmode="numeric">
-                    <button onclick="this.parentElement.parentElement.remove()" 
-                            class="delete-btn bg-red-400 text-white px-4 rounded-lg hover:bg-red-500">
-                        ×
-                    </button>
-                </div>
-            `;
-            document.getElementById('peopleInputs').appendChild(personDiv);
-        }
-
+        // ฟังก์ชันคำนวณสำหรับช่องที่รับตัวเลขและเครื่องหมาย
         function handleCalculator(input) {
             try {
                 const expression = input.value.replace(/[^0-9+\-*/().]/g, '');
                 if (expression) {
                     const result = math.evaluate(expression);
-                    document.getElementById('calculationResult').textContent = 
-                        `= ${result.toFixed(2)} บาท`;
+                    const resultElement = document.getElementById(input.id + 'Result');
+                    if (resultElement) {
+                        resultElement.textContent = `= ${result.toFixed(2)} บาท`;
+                    }
                     input.dataset.calculatedValue = result;
-                } else {
-                    document.getElementById('calculationResult').textContent = '';
-                    input.dataset.calculatedValue = '';
                 }
             } catch (e) {
-                document.getElementById('calculationResult').textContent = 
-                    'รอการคำนวณ...';
+                const resultElement = document.getElementById(input.id + 'Result');
+                if (resultElement) {
+                    resultElement.textContent = 'wait...';
+                }
                 input.dataset.calculatedValue = '';
             }
         }
 
+        // เพิ่มรายการค่าใช้จ่าย
+        function addExpense() {
+            const expenseDiv = document.createElement('div');
+            expenseDiv.className = 'flex gap-4';
+            expenseDiv.innerHTML = `
+                <input type="text" 
+                       class="expense-amount w-1/2 p-2 border rounded-lg"
+                       placeholder="amount"
+                       onkeyup="handleCalculator(this)">
+                <select class="expense-payer w-1/2 p-2 border rounded-lg">
+                    ${defaultNames.map(person => 
+                        `<option value="${person.name}">${person.name}</option>`
+                    ).join('')}
+                </select>
+                <button onclick="this.parentElement.remove()" 
+                        class="bg-red-400 text-white px-3 rounded-lg hover:bg-red-500">
+                    delete
+                </button>
+            `;
+            document.getElementById('expenseList').appendChild(expenseDiv);
+        }
+
+        // สร้างรายชื่อ
+        function createPeopleList() {
+            const container = document.getElementById('peopleList');
+            defaultNames.forEach(person => {
+                const personDiv = document.createElement('div');
+                personDiv.className = 'flex gap-2 items-center';
+                personDiv.innerHTML = `
+                    <input type="text" 
+                           class="person-name w-1/2 p-2 border rounded-lg" 
+                           value="${person.name}">
+                    <input type="text" 
+                           class="person-amount w-1/2 p-2 border rounded-lg"
+                           value="${person.amount}"
+                           onkeyup="handleCalculator(this)"
+                           placeholder="amount">
+                `;
+                container.appendChild(personDiv);
+            });
+        }
+
+        // คำนวณผลลัพธ์
         function calculate() {
+            const people = [];
             const nameInputs = document.getElementsByClassName('person-name');
             const amountInputs = document.getElementsByClassName('person-amount');
-            const totalExpenseInput = document.getElementById('totalExpense');
-            const totalExpense = parseFloat(totalExpenseInput.dataset.calculatedValue || totalExpenseInput.value);
-
-            people = [];
-            let totalContributed = 0;
-
+            
+            // รวบรวมข้อมูลคนและจำนวนเงิน
             for (let i = 0; i < nameInputs.length; i++) {
                 const name = nameInputs[i].value.trim();
-                const amount = parseFloat(amountInputs[i].value) || 0;
+                const amount = parseFloat(amountInputs[i].dataset.calculatedValue || amountInputs[i].value) || 0;
                 if (name) {
                     people.push({ name, amount });
-                    totalContributed += amount;
                 }
             }
 
-            if (people.length === 0 || isNaN(totalExpense)) {
-                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-                return;
+            // รวบรวมค่าใช้จ่าย
+            let totalExpense = 0;
+            const expenseAmounts = document.getElementsByClassName('expense-amount');
+            const expensePayers = document.getElementsByClassName('expense-payer');
+            
+            for (let i = 0; i < expenseAmounts.length; i++) {
+                const amount = parseFloat(expenseAmounts[i].dataset.calculatedValue || expenseAmounts[i].value) || 0;
+                const payer = expensePayers[i].value;
+                if (amount && payer) {
+                    totalExpense += amount;
+                    // เพิ่มยอดให้คนจ่าย
+                    const person = people.find(p => p.name === payer);
+                    if (person) {
+                        person.amount += amount;
+                    }
+                }
             }
 
-            const perPerson = totalExpense / people.length;
+            // หักเงินสมทบ
+            const donation = parseFloat(document.getElementById('donation').dataset.calculatedValue || document.getElementById('donation').value) || 0;
+            const netExpense = totalExpense - donation;
+
+            // คำนวณต่อคน
+            const perPerson = netExpense / people.length;
+
+            // แสดงผล
             let resultsHTML = `
-                <div class="results-card bg-gray-50 p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-bold mb-4 text-gray-800">สรุปค่าใช้จ่าย</h2>
+                <div class="bg-gray-50 p-6 rounded-xl">
+                    <h2 class="text-xl font-bold mb-4">สรุปค่าใช้จ่าย</h2>
                     <div class="space-y-2 mb-6">
-                        <p class="text-gray-600">จำนวนคนทั้งหมด: <span class="font-medium text-gray-800">${people.length} คน</span></p>
-                        <p class="text-gray-600">ค่าใช้จ่ายทั้งหมด: <span class="font-medium text-gray-800">${totalExpense.toFixed(2)} บาท</span></p>
-                        <p class="text-gray-600">ค่าใช้จ่ายต่อคน: <span class="font-medium text-gray-800">${perPerson.toFixed(2)} บาท</span></p>
+                        <p>Total number of people: ${people.length} คน</p>
+                        <p>Total expenses: ${totalExpense.toFixed(2)} บาท</p>
+                        <p>ผู้ใหญ่บ้านฝากมา: ${donation.toFixed(2)} บาท</p>
+                        <p>Net: ${netExpense.toFixed(2)} บาท</p>
+                        <p>Cost per person: ${perPerson.toFixed(2)} บาท</p>
                     </div>
-                    <h3 class="font-bold mb-3 text-gray-800">รายละเอียด:</h3>
-                    <ul class="space-y-3">
+                    <h3 class="font-bold mb-3">Details:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             `;
 
             people.forEach(person => {
@@ -172,27 +202,28 @@
                     status = `ต้องจ่ายเพิ่ม ${difference.toFixed(2)} บาท`;
                     statusClass = 'text-red-600';
                 } else if (difference < 0) {
-                    status = `ได้รับเงินคืน ${(-difference).toFixed(2)} บาท`;
+                    status = `ได้คืน ${(-difference).toFixed(2)} บาท`;
                     statusClass = 'text-green-600';
                 } else {
-                    status = 'ไม่ต้องจ่ายเพิ่มหรือรับคืน';
+                    status = 'ไม่ต้องจ่ายเพิ่มหรือคืน';
                     statusClass = 'text-gray-600';
                 }
                 
                 resultsHTML += `
-                    <li class="p-3 bg-white rounded-lg shadow-sm">
-                        <span class="font-medium">${person.name}</span>
-                        <div class="text-sm text-gray-600">จ่ายไปแล้ว ${person.amount} บาท</div>
+                    <div class="p-3 bg-white rounded-lg">
+                        <div class="font-medium">${person.name}</div>
+                        <div class="text-sm text-gray-600">จ่ายไปแล้ว ${person.amount.toFixed(2)} บาท</div>
                         <div class="font-medium ${statusClass}">${status}</div>
-                    </li>`;
+                    </div>`;
             });
 
-            resultsHTML += '</ul></div>';
+            resultsHTML += '</div></div>';
             document.getElementById('results').innerHTML = resultsHTML;
         }
 
-        // เพิ่มคนแรกอัตโนมัติ
-        addPerson();
+        // เริ่มต้นสร้างรายการ
+        createPeopleList();
+        addExpense();
     </script>
 </body>
 </html>
