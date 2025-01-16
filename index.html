@@ -3,29 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>after MidTerm Drinks</title>
+    <title>คำนวณค่าอาหารกลางวัน</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <style>
+        .calculator-input {
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+        
+        .person-card {
+            transition: all 0.3s ease;
+        }
+        
+        .person-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .results-card {
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delete-btn {
+            transition: all 0.2s ease;
+        }
+
+        .delete-btn:hover {
+            background-color: #EF4444;
+            transform: rotate(5deg);
+        }
+    </style>
 </head>
-<body class="bg-gray-100 p-4 md:p-8">
-    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
-        <h1 class="text-2xl font-bold mb-6 text-center">Cal 2 Survive</h1>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-4 md:p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">
+            💰 คำนวณค่าอาหารกลางวัน
+        </h1>
 
-        <div class="mb-6">
-            <div id="peopleInputs" class="space-y-4">
-                <!-- จะเพิ่มช่องกรอกข้อมูลที่นี่ด้วย JavaScript -->
-            </div>
-            <button onclick="addPerson()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                add
-            </button>
+        <div class="mb-6 space-y-4" id="peopleInputs">
+            <!-- จะเพิ่มช่องกรอกข้อมูลที่นี่ด้วย JavaScript -->
         </div>
 
-        <div class="mb-6">
-            <label class="block mb-2">ค่าใช้จ่ายทั้งหมด:</label>
-            <input type="number" id="totalExpense" class="w-full p-2 border rounded" placeholder="ใส่ค่าใช้จ่ายทั้งหมด">
+        <button onclick="addPerson()" class="btn-primary mb-8 w-full bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 flex items-center justify-center space-x-2">
+            <span class="text-xl">+</span>
+            <span>เพิ่มคน</span>
+        </button>
+
+        <div class="mb-8">
+            <label class="block mb-2 font-medium text-gray-700">ค่าใช้จ่ายทั้งหมด:</label>
+            <input type="text" 
+                   id="totalExpense" 
+                   inputmode="numeric"
+                   class="calculator-input w-full p-4 border rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                   placeholder="ใส่ค่าใช้จ่าย (เช่น 890+890)"
+                   onkeyup="handleCalculator(this)">
+            <p id="calculationResult" class="mt-2 text-gray-500 text-sm"></p>
         </div>
 
-        <button onclick="calculate()" class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mb-6">
-            calculate
+        <button onclick="calculate()" class="btn-primary w-full bg-green-500 text-white px-6 py-4 rounded-lg hover:bg-green-600 mb-8 font-medium text-lg">
+            คำนวณ
         </button>
 
         <div id="results" class="space-y-4"></div>
@@ -36,19 +92,47 @@
 
         function addPerson() {
             const personDiv = document.createElement('div');
-            personDiv.className = 'flex gap-4';
+            personDiv.className = 'person-card bg-gray-50 p-4 rounded-lg';
             personDiv.innerHTML = `
-                <input type="text" class="person-name w-1/2 p-2 border rounded" placeholder="ชื่อ">
-                <input type="number" class="person-amount w-1/2 p-2 border rounded" placeholder="จำนวนเงิน">
-                <button onclick="this.parentElement.remove()" class="bg-red-500 text-white px-3 rounded hover:bg-red-600">ลบ</button>
+                <div class="flex gap-4">
+                    <input type="text" class="person-name w-1/2 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                           placeholder="ชื่อ">
+                    <input type="number" class="person-amount w-1/2 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                           placeholder="จำนวนเงิน"
+                           inputmode="numeric">
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            class="delete-btn bg-red-400 text-white px-4 rounded-lg hover:bg-red-500">
+                        ×
+                    </button>
+                </div>
             `;
             document.getElementById('peopleInputs').appendChild(personDiv);
+        }
+
+        function handleCalculator(input) {
+            try {
+                const expression = input.value.replace(/[^0-9+\-*/().]/g, '');
+                if (expression) {
+                    const result = math.evaluate(expression);
+                    document.getElementById('calculationResult').textContent = 
+                        `= ${result.toFixed(2)} บาท`;
+                    input.dataset.calculatedValue = result;
+                } else {
+                    document.getElementById('calculationResult').textContent = '';
+                    input.dataset.calculatedValue = '';
+                }
+            } catch (e) {
+                document.getElementById('calculationResult').textContent = 
+                    'รอการคำนวณ...';
+                input.dataset.calculatedValue = '';
+            }
         }
 
         function calculate() {
             const nameInputs = document.getElementsByClassName('person-name');
             const amountInputs = document.getElementsByClassName('person-amount');
-            const totalExpense = parseFloat(document.getElementById('totalExpense').value);
+            const totalExpenseInput = document.getElementById('totalExpense');
+            const totalExpense = parseFloat(totalExpenseInput.dataset.calculatedValue || totalExpenseInput.value);
 
             people = [];
             let totalContributed = 0;
@@ -69,28 +153,38 @@
 
             const perPerson = totalExpense / people.length;
             let resultsHTML = `
-                <div class="bg-gray-50 p-4 rounded">
-                    <p class="font-bold">สรุป:</p>
-                    <p>จำนวนคนทั้งหมด: ${people.length} คน</p>
-                    <p>ค่าใช้จ่ายทั้งหมด: ${totalExpense.toFixed(2)} บาท</p>
-                    <p>ค่าใช้จ่ายต่อคน: ${perPerson.toFixed(2)} บาท</p>
-                </div>
-                <div class="mt-4">
-                    <p class="font-bold">รายละเอียด:</p>
-                    <ul class="list-disc pl-5 space-y-2">
+                <div class="results-card bg-gray-50 p-6 rounded-lg shadow-sm">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">สรุปค่าใช้จ่าย</h2>
+                    <div class="space-y-2 mb-6">
+                        <p class="text-gray-600">จำนวนคนทั้งหมด: <span class="font-medium text-gray-800">${people.length} คน</span></p>
+                        <p class="text-gray-600">ค่าใช้จ่ายทั้งหมด: <span class="font-medium text-gray-800">${totalExpense.toFixed(2)} บาท</span></p>
+                        <p class="text-gray-600">ค่าใช้จ่ายต่อคน: <span class="font-medium text-gray-800">${perPerson.toFixed(2)} บาท</span></p>
+                    </div>
+                    <h3 class="font-bold mb-3 text-gray-800">รายละเอียด:</h3>
+                    <ul class="space-y-3">
             `;
 
             people.forEach(person => {
                 const difference = perPerson - person.amount;
-                let status;
+                let status, statusClass;
+                
                 if (difference > 0) {
                     status = `ต้องจ่ายเพิ่ม ${difference.toFixed(2)} บาท`;
+                    statusClass = 'text-red-600';
                 } else if (difference < 0) {
                     status = `ได้รับเงินคืน ${(-difference).toFixed(2)} บาท`;
+                    statusClass = 'text-green-600';
                 } else {
                     status = 'ไม่ต้องจ่ายเพิ่มหรือรับคืน';
+                    statusClass = 'text-gray-600';
                 }
-                resultsHTML += `<li>${person.name} (จ่ายไปแล้ว ${person.amount} บาท): ${status}</li>`;
+                
+                resultsHTML += `
+                    <li class="p-3 bg-white rounded-lg shadow-sm">
+                        <span class="font-medium">${person.name}</span>
+                        <div class="text-sm text-gray-600">จ่ายไปแล้ว ${person.amount} บาท</div>
+                        <div class="font-medium ${statusClass}">${status}</div>
+                    </li>`;
             });
 
             resultsHTML += '</ul></div>';
