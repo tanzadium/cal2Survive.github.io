@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>after MidTerm Drinks</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center">คำนวณค่าอาหารกลางวัน</h1>
+
+        <div class="mb-6">
+            <div id="peopleInputs" class="space-y-4">
+                <!-- จะเพิ่มช่องกรอกข้อมูลที่นี่ด้วย JavaScript -->
+            </div>
+            <button onclick="addPerson()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                add
+            </button>
+        </div>
+
+        <div class="mb-6">
+            <label class="block mb-2">ค่าใช้จ่ายทั้งหมด:</label>
+            <input type="number" id="totalExpense" class="w-full p-2 border rounded" placeholder="ใส่ค่าใช้จ่ายทั้งหมด">
+        </div>
+
+        <button onclick="calculate()" class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mb-6">
+            calculate
+        </button>
+
+        <div id="results" class="space-y-4"></div>
+    </div>
+
+    <script>
+        let people = [];
+
+        function addPerson() {
+            const personDiv = document.createElement('div');
+            personDiv.className = 'flex gap-4';
+            personDiv.innerHTML = `
+                <input type="text" class="person-name w-1/2 p-2 border rounded" placeholder="ชื่อ">
+                <input type="number" class="person-amount w-1/2 p-2 border rounded" placeholder="จำนวนเงิน">
+                <button onclick="this.parentElement.remove()" class="bg-red-500 text-white px-3 rounded hover:bg-red-600">ลบ</button>
+            `;
+            document.getElementById('peopleInputs').appendChild(personDiv);
+        }
+
+        function calculate() {
+            const nameInputs = document.getElementsByClassName('person-name');
+            const amountInputs = document.getElementsByClassName('person-amount');
+            const totalExpense = parseFloat(document.getElementById('totalExpense').value);
+
+            people = [];
+            let totalContributed = 0;
+
+            for (let i = 0; i < nameInputs.length; i++) {
+                const name = nameInputs[i].value.trim();
+                const amount = parseFloat(amountInputs[i].value) || 0;
+                if (name) {
+                    people.push({ name, amount });
+                    totalContributed += amount;
+                }
+            }
+
+            if (people.length === 0 || isNaN(totalExpense)) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+
+            const perPerson = totalExpense / people.length;
+            let resultsHTML = `
+                <div class="bg-gray-50 p-4 rounded">
+                    <p class="font-bold">สรุป:</p>
+                    <p>จำนวนคนทั้งหมด: ${people.length} คน</p>
+                    <p>ค่าใช้จ่ายทั้งหมด: ${totalExpense.toFixed(2)} บาท</p>
+                    <p>ค่าใช้จ่ายต่อคน: ${perPerson.toFixed(2)} บาท</p>
+                </div>
+                <div class="mt-4">
+                    <p class="font-bold">รายละเอียด:</p>
+                    <ul class="list-disc pl-5 space-y-2">
+            `;
+
+            people.forEach(person => {
+                const difference = perPerson - person.amount;
+                let status;
+                if (difference > 0) {
+                    status = `ต้องจ่ายเพิ่ม ${difference.toFixed(2)} บาท`;
+                } else if (difference < 0) {
+                    status = `ได้รับเงินคืน ${(-difference).toFixed(2)} บาท`;
+                } else {
+                    status = 'ไม่ต้องจ่ายเพิ่มหรือรับคืน';
+                }
+                resultsHTML += `<li>${person.name} (จ่ายไปแล้ว ${person.amount} บาท): ${status}</li>`;
+            });
+
+            resultsHTML += '</ul></div>';
+            document.getElementById('results').innerHTML = resultsHTML;
+        }
+
+        // เพิ่มคนแรกอัตโนมัติ
+        addPerson();
+    </script>
+</body>
+</html>
